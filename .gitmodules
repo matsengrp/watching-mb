@@ -1,0 +1,3 @@
+[submodule "ds-data"]
+	path = ds-data
+	url = git@github.com:matsengrp/ds-data.git
