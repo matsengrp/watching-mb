@@ -2,8 +2,12 @@ set -eu
 
 mkdir -p analysis
 
+realpath_osx() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+}
+
 for i in $(seq 8);
 do
     mkdir -p analysis/ds${i}
-    ln -s $(readlink -f ds-data/ds${i}) analysis/ds${i}/data
+    ln -s $(realpath_osx ds-data/ds${i}) analysis/ds${i}/data
 done
