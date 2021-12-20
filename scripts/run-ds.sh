@@ -7,6 +7,7 @@ SCRIPTS_DIR=$REPO_ROOT/scripts/
 TEMPLATE_DIR=$REPO_ROOT/templates/
 
 $SCRIPTS_DIR/run-iqtree.sh
+$SCRIPTS_DIR/move_iqtree.sh
 
 gpb template --template-dir ${TEMPLATE_DIR} mb-for-watching.json data/base.json config.json
 python ${REPO_ROOT}/scripts/add-starting-tree.py
