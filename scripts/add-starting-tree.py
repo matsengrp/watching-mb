@@ -5,7 +5,7 @@ json_path = "config.json"
 with open(json_path) as json_file:
     json_decoded = json.load(json_file)
 
-with open("ds.fasta.treefile") as tree_file:
+with open("../iqtree/ds.fasta.treefile") as tree_file:
     tree_string = tree_file.readline().rstrip()
 
 json_decoded["starttree"] = tree_string

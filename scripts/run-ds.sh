@@ -2,21 +2,16 @@
 
 set -eu -o pipefail
 
-REPO_ROOT="../.."
+REPO_ROOT="../../.."
 SCRIPTS_DIR=$REPO_ROOT/scripts/
 TEMPLATE_DIR=$REPO_ROOT/templates/
 
-$SCRIPTS_DIR/run-iqtree.sh
-$SCRIPTS_DIR/move_iqtree.sh
+mkdir iqtree && cd iqtree
+${SCRIPTS_DIR}run-iqtree.sh
+cd ..
 
-gpb template --template-dir ${TEMPLATE_DIR} mb-for-watching.json data/base.json config.json
-python ${REPO_ROOT}/scripts/add-starting-tree.py
-gpb template --template-dir ${TEMPLATE_DIR} basic.mb config.json run.mb
-
-mb run.mb | tee mb.log
-
-gpb template --template-dir ${TEMPLATE_DIR} process-watching-mb-run.sh config.json process-watching-mb-run.sh
-
-sh process-watching-mb-run.sh
+mkdir mb && cd mb
+${SCRIPTS_DIR}run-mb.sh ${TEMPLATE_DIR} ${SCRIPTS_DIR}
+cd ..
 
 touch 0sentinel

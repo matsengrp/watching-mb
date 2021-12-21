@@ -1,6 +1,6 @@
 {
     "config_path": "mb-for-watching.json",
-    "nexus_alignment_path": "ds-data/DS{{ds_number}}.n.nex",
+    "nexus_alignment_path": "../data/DS{{ds_number}}.n.nex",
     "output_prefix": "ds{{ds_number}}",
     "brlenspr": "unconstrained:exp(10.0)",
     "nchains": 4,
