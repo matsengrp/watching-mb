@@ -14,4 +14,8 @@ mkdir mb && cd mb
 ${SCRIPTS_DIR}run-mb.sh ${TEMPLATE_DIR} ${SCRIPTS_DIR}
 cd ..
 
+mkdir sdag && cd sdag
+${SCRIPTS_DIR}run-sdag.sh ${SCRIPTS_DIR}
+cd ..
+
 touch 0sentinel

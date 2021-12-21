@@ -6,4 +6,4 @@ mb run.mb | tee mb.log
 
 gpb template --template-dir $1 process-watching-mb-run.sh config.json process-watching-mb-run.sh
 
-sh process-watching-mb-run.sh
+sh $1process-watching-mb-run.sh
