@@ -1,0 +1,15 @@
+{
+    "config_path": "mb-for-golden.json",
+    "nexus_alignment_path": "../data/DS{{ds_number}}.n.nex",
+    "output_prefix": "ds{{ds_number}}",
+    "brlenspr": "unconstrained:exp(10.0)",
+    "nchains": 4,
+    "ngen": 10000,
+    "burnin_frac": 0.1,
+    "samplefreq": 1000,
+    "printfreq": 1000,
+    "seed": 42,
+    "swapseed": 1337,
+    "reroot_number": {{reroot_number}},
+    "reroot_name": "{{reroot_name}}"
+}
