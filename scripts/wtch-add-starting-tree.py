@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import json
 
 json_path = "config.json"

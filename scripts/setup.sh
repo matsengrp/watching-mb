@@ -10,7 +10,7 @@ realpath_osx() {
 
 for i in $(seq 8);
 do
-    for target in golden;
+    for target in analysis golden;
     do
         mkdir -p $target/ds${i}
         data_path=$(realpath $target)/ds${i}/data

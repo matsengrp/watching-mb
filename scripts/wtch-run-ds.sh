@@ -2,14 +2,12 @@
 
 set -eu -o pipefail
 
-TEMPLATE_DIR=$WTCH_ROOT/templates/
-
 mkdir iqtree && cd iqtree
 wtch-run-iqtree.sh
 cd ..
 
 mkdir mb && cd mb
-wtch-run-mb.sh ${TEMPLATE_DIR}
+wtch-run-watching-mb.sh
 cd ..
 
 mkdir sdag && cd sdag
