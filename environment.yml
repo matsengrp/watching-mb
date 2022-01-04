@@ -1,0 +1,12 @@
+name: bito
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - iqtree
+  - mrbayes
+  - newick_utils
+  - parallel
+  - pip
+  - pip:
+    - seqmagick

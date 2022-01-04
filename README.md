@@ -2,10 +2,16 @@
 
 ## Requirements
 
-* https://github.com/matsengrp/gp-benchmark-1-environment/
+* https://github.com/phylovi/bito : install in a conda environment as per the instructions
+* https://github.com/matsengrp/gp-benchmark-1-environment/ : clone and install with `pip install .`
 * https://pypi.org/project/seqmagick/
 * https://www.gnu.org/software/parallel/ (available via https://anaconda.org/conda-forge/parallel)
-* Install newick_utils, e.g. by `conda install -c bioconda newick_utils`
+* https://github.com/tjunier/newick_utils
+* http://nbisweden.github.io/MrBayes/
+
+
+
+    conda env update --file environment.yml
 
 ## Further setup
 
