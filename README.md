@@ -9,7 +9,7 @@
 * https://github.com/tjunier/newick_utils
 * http://nbisweden.github.io/MrBayes/
 
-
+You can install all of these using
 
     conda env update --file environment.yml
 
@@ -20,4 +20,7 @@
 
 ## To run
 
+Make sure you are first in the right conda environment.
+
+    scripts/setup.sh
     ./pipeline.sh

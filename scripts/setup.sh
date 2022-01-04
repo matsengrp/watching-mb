@@ -12,5 +12,11 @@ for i in $(seq 8);
 do
     mkdir -p analysis/ds${i}
     # Ensure current path has no spaces
-    ln -s $(realpath_osx ds-data/ds${i}) analysis/ds${i}/data
+    data_path=analysis/ds${i}/data
+    test ! -e $data_path || ln -s $(realpath_osx ds-data/ds${i}) $data_path
+done
+
+for i in scripts/wtch-*;
+do
+    ln -s $(realpath_osx $i) $CONDA_PREFIX/bin/
 done
