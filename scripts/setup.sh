@@ -16,6 +16,7 @@ do
         data_path=$(realpath $target)/ds${i}/data
         test -e $data_path || ln -s $(realpath ds-data/ds${i}) $data_path
     done
+    ln -s $(realpath_osx golden/ds${i}) $(realpath_osx analysis/ds${i}/golden)
 done
 
 # Install all scripts with the `wtch` prefix into the conda environment.

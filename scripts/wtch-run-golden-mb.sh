@@ -1,4 +1,5 @@
 # Prepare files for a golden MB run, and run.
+# To be run in an `mb` directory.
 
 set -eu
 
