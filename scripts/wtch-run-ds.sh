@@ -2,8 +2,7 @@
 
 set -eu -o pipefail
 
-REPO_ROOT="../../.."
-TEMPLATE_DIR=$REPO_ROOT/templates/
+TEMPLATE_DIR=$WTCH_ROOT/templates/
 
 mkdir iqtree && cd iqtree
 wtch-run-iqtree.sh
