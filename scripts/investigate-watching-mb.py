@@ -132,10 +132,12 @@ total_seen_count = (
 )
 
 
+max_topology_count = 10
 golden_pickle_path = "golden/posterior.pkl"
 topology_sequence_path = "mb/rerooted-topology-sequence.tab"
-max_topology_count = 10
+config_path = "config.json"
 
+config = dict_of_json(config_path)
 golden = golden_data_of_path(golden_pickle_path)
 accumulation_df = mcmc_df_of_topology_sequence(topology_sequence_path, golden)
 
@@ -143,7 +145,6 @@ ax = accumulation_df[["total_pp", "credible_set_frac"]].plot(ylim=[0, 1])
 ax.figure.savefig("accumulation.pdf")
 accumulation_df.to_csv("accumulation.csv")
 
-config = dict_of_json("config.json")
 
 sdag_results_df = sdag_results_df_of(
     max_topology_count=max_topology_count,
