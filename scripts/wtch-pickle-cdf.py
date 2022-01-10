@@ -2,14 +2,13 @@
 
 import pickle
 import click
+from collections import namedtuple
+
+
+TreeDistribution = namedtuple("TreeDistribution", ["pp_dict", "tree_ci_list"])
 
 
 def read_cdf(path_read, ci):
-    """
-    Return a dictionary mapping all of the trees to
-    their posterior probabilities (PPs), and
-    the set of trees in the ci credible interval)
-    """
     pp_dict = {}
     tree_ci_list = []
     with open(path_read) as file:
@@ -19,12 +18,7 @@ def read_cdf(path_read, ci):
             pp_dict[nwk] = pp
             if float(raw_cdf) < ci:
                 tree_ci_list.append(nwk)
-    return pp_dict, tree_ci_list
-
-
-def pickle_cdf(path_write, pp_dict, tree_ci_list):
-    with open(path_write, "wb") as file:
-        pickle.dump((pp_dict, tree_ci_list), file)
+    return TreeDistribution(pp_dict, tree_ci_list)
 
 
 @click.command()
@@ -32,12 +26,15 @@ def pickle_cdf(path_write, pp_dict, tree_ci_list):
 @click.argument("write_path")
 def cli(read_path, write_path):
     """
-    Take a list of trees in the CDF format and save a pickle with two things:
-    a dictionary mapping all of the trees to their posterior probabilities (PPs),
-    and the set of trees in the 95% credible interval.
+    Take a list of trees in the CDF format and save a pickled TreeDistribution object.
+
+    This has two fields:
+    * pp_dict: a dictionary mapping all of the trees to their posterior probabilities
+    * tree_ci_list : the set of trees in the 95% credible interval.
     """
-    pp_dict, tree_ci_list = read_cdf(read_path, 0.95)
-    pickle_cdf(write_path, pp_dict, tree_ci_list)
+    tree_distribution = read_cdf(read_path, 0.95)
+    with open(write_path, "wb") as file:
+        pickle.dump(tree_distribution, file)
 
 
 if __name__ == "__main__":
