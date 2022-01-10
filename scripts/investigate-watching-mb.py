@@ -122,7 +122,7 @@ def sdag_results_df_of(max_topology_count, golden, reroot_number):
                 "sdag_edge_count",
                 "sdag_topos_in_credible",
                 "sdag_topos_total",
-                "sdag_topos_total_pp",
+                "sdag_total_pp",
             ],
         )
 
@@ -133,25 +133,20 @@ total_seen_count = (
 
 
 golden_pickle_path = "golden/posterior.pkl"
+topology_sequence_path = "mb/rerooted-topology-sequence.tab"
+max_topology_count = 10
+
 golden = golden_data_of_path(golden_pickle_path)
+accumulation_df = mcmc_df_of_topology_sequence(topology_sequence_path, golden)
 
-accumulation_df = mcmc_df_of_topology_sequence(
-    "mb/rerooted-topology-sequence.tab", golden
-)
-
-# import numpy as np
-# ts = pd.Series(np.random.randn(1000), index=pd.date_range('1/1/2000', periods=1000))
-# ts = ts.cumsum()
-# ts.plot()
-
-# ax = accumulation_df[["total_pp", "credible_set_frac"]].plot(ylim=[0, 1])
-# ax.figure.savefig("accumulation.pdf")
+ax = accumulation_df[["total_pp", "credible_set_frac"]].plot(ylim=[0, 1])
+ax.figure.savefig("accumulation.pdf")
 accumulation_df.to_csv("accumulation.csv")
 
 config = dict_of_json("config.json")
 
 sdag_results_df = sdag_results_df_of(
-    max_topology_count=2,
+    max_topology_count=max_topology_count,
     golden=golden,
     reroot_number=config["reroot_number"],
 )
@@ -180,14 +175,14 @@ final_df.to_csv(
         "sdag_node_count",
         "sdag_topos_in_credible",
         "sdag_topos_total",
-        "sdag_topos_total_pp",
+        "sdag_total_pp",
         "sdag_credible_set_frac",
     ],
 )
 
 
-# ax = final_df[["total_pp", "sdag_total_pp"]].plot(ylim=[0, 1])
-# ax.figure.savefig("pp-accumulation.pdf")
-#
-# ax = final_df[["credible_set_frac", "sdag_credible_set_frac"]].plot(ylim=[0, 1])
-# ax.figure.savefig("credible-accumulation.pdf")
+ax = final_df[["total_pp", "sdag_total_pp"]].plot(ylim=[0, 1])
+ax.figure.savefig("pp-accumulation.pdf")
+
+ax = final_df[["credible_set_frac", "sdag_credible_set_frac"]].plot(ylim=[0, 1])
+ax.figure.savefig("credible-accumulation.pdf")

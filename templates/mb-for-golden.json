@@ -4,7 +4,7 @@
     "output_prefix": "ds{{ds_number}}",
     "brlenspr": "unconstrained:exp(10.0)",
     "nchains": 4,
-    "ngen": 10000,
+    "ngen": 1000000,
     "burnin_frac": 0.1,
     "samplefreq": 1000,
     "printfreq": 1000,
