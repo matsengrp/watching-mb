@@ -1,7 +1,9 @@
 # Prepare files for a golden MB run, and run.
-# To be run in an `mb` directory.
 
 set -eu
+
+mkdir mb
+cd mb
 
 wtch-template.sh mb-for-golden.json ../data/base.json config.json
 wtch-template.sh simplest.mb config.json run.mb

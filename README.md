@@ -14,7 +14,7 @@ You can install all of these in your `bito` environment using
     conda activate bito
     conda env update --file environment.yml
 
-## Further setup, to be run in the root directory
+## Further setup, to be run in the root directory of the repository
 
     git submodule update --init --recursive
     conda env config vars set WTCH_ROOT=$PWD
@@ -25,5 +25,14 @@ You can install all of these in your `bito` environment using
 
 Make sure you are first in the right conda environment.
 
+### Set up directories and paths
+
     scripts/setup.sh
-    ./pipeline.sh
+
+### Run the golden runs
+
+    scripts/all-golden.sh
+
+### Run analysis
+
+    scripts/all-analysis.sh

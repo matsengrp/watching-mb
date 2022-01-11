@@ -8,7 +8,7 @@ realpath_osx() {
     [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }
 
-for i in $(seq 8);
+for i in 1 3 4 5 6 7 8;
 do
     for target in analysis golden;
     do

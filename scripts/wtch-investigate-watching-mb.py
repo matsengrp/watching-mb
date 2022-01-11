@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+
 import pickle
 import bito
 import pandas as pd
@@ -127,63 +130,67 @@ def sdag_results_df_of(max_topology_count, golden, reroot_number):
         )
 
 
-total_seen_count = (
-    int(subprocess.check_output("ls topologies-seen | wc -l", shell=True)) + 1
-)
+def run(
+    target_topology_count=250,
+    golden_pickle_path="golden/posterior.pkl",
+    topology_sequence_path="mb/rerooted-topology-sequence.tab",
+    config_path="data/base.json",
+):
+
+    config = dict_of_json(config_path)
+    golden = golden_data_of_path(golden_pickle_path)
+    accumulation_df = mcmc_df_of_topology_sequence(topology_sequence_path, golden)
+
+    ax = accumulation_df[["total_pp", "credible_set_frac"]].plot(ylim=[0, 1])
+    ax.figure.savefig("accumulation.pdf")
+    accumulation_df.to_csv("accumulation.csv")
+
+    total_seen_count = int(
+        subprocess.check_output("ls topologies-seen | wc -l", shell=True)
+    )
+
+    max_topology_count = min([total_seen_count, target_topology_count])
+
+    sdag_results_df = sdag_results_df_of(
+        max_topology_count=max_topology_count,
+        golden=golden,
+        reroot_number=config["reroot_number"],
+    )
+    sdag_results_df.to_csv("sdag-results.csv")
+
+    sdag_results_df.reset_index(inplace=True)
+    sdag_results_df["index"] += 1
+    sdag_results_df.rename(columns={"index": "support_size"}, inplace=True)
+    sdag_results_df["sdag_credible_set_frac"] = sdag_results_df[
+        "sdag_topos_in_credible"
+    ] / len(golden.credible_set)
+    sdag_results_df.tail()
+
+    final_df = accumulation_df.merge(sdag_results_df)
+    final_df.to_csv(
+        "final-df.csv",
+        columns=[
+            "support_size",
+            "mcmc_iters",
+            "total_pp",
+            "in_credible_set",
+            "credible_set_found",
+            "credible_set_frac",
+            "sdag_edge_count",
+            "sdag_node_count",
+            "sdag_topos_in_credible",
+            "sdag_topos_total",
+            "sdag_total_pp",
+            "sdag_credible_set_frac",
+        ],
+    )
+
+    ax = final_df[["total_pp", "sdag_total_pp"]].plot(ylim=[0, 1])
+    ax.figure.savefig("pp-accumulation.pdf")
+
+    ax = final_df[["credible_set_frac", "sdag_credible_set_frac"]].plot(ylim=[0, 1])
+    ax.figure.savefig("credible-accumulation.pdf")
 
 
-max_topology_count = 10
-golden_pickle_path = "golden/posterior.pkl"
-topology_sequence_path = "mb/rerooted-topology-sequence.tab"
-config_path = "config.json"
-
-config = dict_of_json(config_path)
-golden = golden_data_of_path(golden_pickle_path)
-accumulation_df = mcmc_df_of_topology_sequence(topology_sequence_path, golden)
-
-ax = accumulation_df[["total_pp", "credible_set_frac"]].plot(ylim=[0, 1])
-ax.figure.savefig("accumulation.pdf")
-accumulation_df.to_csv("accumulation.csv")
-
-
-sdag_results_df = sdag_results_df_of(
-    max_topology_count=max_topology_count,
-    golden=golden,
-    reroot_number=config["reroot_number"],
-)
-sdag_results_df.to_csv("sdag-results.csv")
-
-
-sdag_results_df.reset_index(inplace=True)
-sdag_results_df["index"] += 1
-sdag_results_df.rename(columns={"index": "support_size"}, inplace=True)
-sdag_results_df["sdag_credible_set_frac"] = sdag_results_df[
-    "sdag_topos_in_credible"
-] / len(golden.credible_set)
-sdag_results_df.tail()
-
-final_df = accumulation_df.merge(sdag_results_df)
-final_df.to_csv(
-    "final-df.csv",
-    columns=[
-        "support_size",
-        "mcmc_iters",
-        "total_pp",
-        "in_credible_set",
-        "credible_set_found",
-        "credible_set_frac",
-        "sdag_edge_count",
-        "sdag_node_count",
-        "sdag_topos_in_credible",
-        "sdag_topos_total",
-        "sdag_total_pp",
-        "sdag_credible_set_frac",
-    ],
-)
-
-
-ax = final_df[["total_pp", "sdag_total_pp"]].plot(ylim=[0, 1])
-ax.figure.savefig("pp-accumulation.pdf")
-
-ax = final_df[["credible_set_frac", "sdag_credible_set_frac"]].plot(ylim=[0, 1])
-ax.figure.savefig("credible-accumulation.pdf")
+if __name__ == "__main__":
+    run()

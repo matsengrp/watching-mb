@@ -10,8 +10,6 @@ mkdir mb && cd mb
 wtch-run-watching-mb.sh
 cd ..
 
-mkdir sdag && cd sdag
-wtch-run-sdag.sh
-cd ..
+wtch-investigate-watching-mb.py
 
 touch 0sentinel
