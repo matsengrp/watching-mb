@@ -2,4 +2,4 @@
 
 set -eu -o pipefail
 
-ls analysis/ | parallel 'cd analysis/{} && scripts/wtch-run-analysis.sh'
+ls analysis/ | parallel 'cd analysis/{} && wtch-run-analysis.sh'
