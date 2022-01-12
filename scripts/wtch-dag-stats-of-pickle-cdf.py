@@ -21,9 +21,11 @@ def write_stats(pickle_path, out_stats_path):
         inst.read_newick_file(ci_path)
         inst.make_dag()
         inst.print_status()
+        stats = inst.dag_summary_statistics()
+        stats["CI size"] = len(tree_ci_list)
 
         with open(out_stats_path, "w") as fp:
-            fp.write(json.dumps(inst.dag_summary_statistics(), indent=4))
+            fp.write(json.dumps(stats, indent=4))
             fp.write("\n")
 
 
