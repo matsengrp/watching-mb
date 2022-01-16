@@ -4,12 +4,8 @@
 
 * https://github.com/phylovi/bito : this will build a conda environment named `bito`
 * https://github.com/matsengrp/gp-benchmark-1-environment/ : clone and install with `pip install .`
-* https://pypi.org/project/seqmagick/
-* https://www.gnu.org/software/parallel/ (available via https://anaconda.org/conda-forge/parallel)
-* https://github.com/tjunier/newick_utils
-* http://nbisweden.github.io/MrBayes/
 
-You can install all of these in your `bito` environment using
+Additional dependencies that you can install in your `bito` environment using
 
     conda activate bito
     conda env update --file environment.yml

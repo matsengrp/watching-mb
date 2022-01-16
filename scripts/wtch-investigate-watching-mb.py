@@ -111,13 +111,13 @@ def sdag_results_of_topology_count_general(topology_count, golden, reroot_number
     ]
 
 
-def sdag_results_df_of(max_topology_count, golden, reroot_number):
+def sdag_results_df_of(max_topology_count, golden, reroot_number, max_thread_count):
     sdag_results_of_topology_count = partial(
         sdag_results_of_topology_count_general,
         golden=golden,
         reroot_number=reroot_number,
     )
-    with multiprocessing.Pool() as pool:
+    with multiprocessing.Pool(5) as pool:
         return pd.DataFrame(
             pool.map(sdag_results_of_topology_count, range(1, max_topology_count + 1)),
             columns=[
@@ -132,6 +132,7 @@ def sdag_results_df_of(max_topology_count, golden, reroot_number):
 
 def run(
     target_topology_count=250,
+    max_thread_count=5,
     golden_pickle_path="golden/posterior.pkl",
     topology_sequence_path="mb/rerooted-topology-sequence.tab",
     config_path="data/base.json",
@@ -155,6 +156,7 @@ def run(
         max_topology_count=max_topology_count,
         golden=golden,
         reroot_number=config["reroot_number"],
+        max_thread_count=max_thread_count,
     )
     sdag_results_df.to_csv("sdag-results.csv")
 
