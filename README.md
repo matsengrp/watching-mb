@@ -2,12 +2,12 @@
 
 ## Requirements
 
-* https://github.com/phylovi/bito : this will build a conda environment named `bito`
-* https://github.com/matsengrp/gp-benchmark-1-environment/ : clone and install with `pip install .`
+[Install bito](https://github.com/phylovi/bito), building a conda environment named `bito`
 
 Additional dependencies that you can install in your `bito` environment using
 
     conda activate bito
+    pip install -e .
     conda env update --file environment.yml
 
 ## Further setup, to be run in the root directory of the repository
