@@ -1,6 +1,5 @@
-# Perform `gpb template`, but with the right template directory.
+# Perform `wmb template`, but with the right template directory.
 
 set -eu
 
-gpb template --template-dir $WTCH_ROOT/templates/ $@
-
+wmb template --template-dir $WTCH_ROOT/templates/ $@
