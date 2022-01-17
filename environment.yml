@@ -11,4 +11,5 @@ dependencies:
   - parallel
   - pip
   - pip:
+    - click
     - seqmagick
