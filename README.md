@@ -2,15 +2,33 @@
 
 ## Requirements
 
-* https://github.com/matsengrp/gp-benchmark-1-environment/
-* https://pypi.org/project/seqmagick/
-* https://www.gnu.org/software/parallel/ (available via https://anaconda.org/conda-forge/parallel)
+[Install bito](https://github.com/phylovi/bito), building a conda environment named `bito`
 
-## Further setup
+Additional dependencies that you can install in your `bito` environment using
+
+    conda activate bito
+    pip install -e .
+    conda env update --file environment.yml
+
+## Further setup, to be run in the root directory of the repository
 
     git submodule update --init --recursive
+    conda env config vars set WTCH_ROOT=$PWD
+    conda activate bito
 
 
 ## To run
 
-    ./pipeline.sh
+Make sure you are first in the right conda environment.
+
+### Set up directories and paths
+
+    scripts/setup.sh
+
+### Run the golden runs
+
+    scripts/all-golden.sh
+
+### Run analysis
+
+    scripts/all-analysis.sh

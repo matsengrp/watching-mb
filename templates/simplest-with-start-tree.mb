@@ -1,0 +1,14 @@
+execute {{nexus_alignment_path}};
+
+begin trees;
+  tree starttree = {{starttree}}
+end;
+
+begin mrbayes;
+    set autoclose=yes nowarn=yes seed={{seed}} swapseed={{swapseed}};
+    lset nst=1 rates=equal;
+    prset statefreqpr=fixed(equal) topologypr=uniform brlenspr={{brlenspr}};
+    mcmcp nruns=1 nchains={{nchains}} ngen={{ngen}} samplefreq={{samplefreq}} printfreq={{printfreq}} diagnfreq={{printfreq}} file={{output_prefix}};
+    startvals tau = starttree V = starttree;
+    mcmc;
+end;
