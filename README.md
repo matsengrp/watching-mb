@@ -13,6 +13,7 @@ Additional dependencies that you can install in your `bito` environment using
 ## Further setup, to be run in the root directory of the repository
 
     git submodule update --init --recursive
+    make -C spr_neighbors
     conda env config vars set WTCH_ROOT=$PWD
     conda activate bito
 

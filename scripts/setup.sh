@@ -9,7 +9,7 @@ realpath_osx() {
 }
 
 # Install all scripts with the `wtch` prefix into the conda environment.
-for script in scripts/wtch-*;
+for script in scripts/wtch-* spr_neighbors/spr_neighbors;
 do
     test -e $CONDA_PREFIX/bin/$(basename $script) || ln -s $(realpath_osx $script) $CONDA_PREFIX/bin/
 done
