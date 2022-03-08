@@ -137,7 +137,7 @@ def run(
     topology_sequence_path="mb/rerooted-topology-sequence.tab",
     config_path="data/base.json",
 ):
-
+ 
     config = dict_of_json(config_path)
     golden = golden_data_of_path(golden_pickle_path)
     accumulation_df = mcmc_df_of_topology_sequence(topology_sequence_path, golden)

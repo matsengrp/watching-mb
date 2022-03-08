@@ -2,7 +2,7 @@
 
 set -eu
 
-mkdir mb
+mkdir -p mb
 cd mb
 
 wtch-template.sh mb-for-golden.json ../data/base.json config.json

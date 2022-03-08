@@ -17,7 +17,7 @@ def tree_data_of_path(tree_pickle_path):
     return TreeData(pp_dict, set(tree_ci_list))
 
 
-def optimize_branch_lengths_and_sort(tree_set, sequence_file_path):
+def optimize_branch_lengths_and_sort(tree_set, sequence_file_path, sort=True):
     """
     Returns the list of trees in tree_set, with optimal branch length, ordered by
     likelihood. The first tree has the highest likelihood.
@@ -77,9 +77,11 @@ def optimize_branch_lengths_and_sort(tree_set, sequence_file_path):
         # Load all the tree info into variables and sort on likelihood.
         with open(optimized_path, "r") as the_file:
             optimized_trees = the_file.read().splitlines()
-        tree_likelihoods = np.loadtxt(likelihood_path, delimiter=";", dtype=float)
-        indices_for_sort = np.flip(np.argsort(tree_likelihoods))
-        optimized_trees = [optimized_trees[j] for j in indices_for_sort]
+     
+        if sort:
+            tree_likelihoods = np.loadtxt(likelihood_path, delimiter=";", dtype=float)
+            indices_for_sort = np.flip(np.argsort(tree_likelihoods))
+            optimized_trees = [optimized_trees[j] for j in indices_for_sort]
 
         # Clean up local files.
         for extension in ["ckp.gz", "iqtree", "log", "treefile"]:
@@ -89,19 +91,15 @@ def optimize_branch_lengths_and_sort(tree_set, sequence_file_path):
 
 
 @click.command()
-@click.option("--file-type", type=click.Choice(["nwk", "pkl"]), default="nwk")
 @click.argument("tree_path")
 @click.argument("fasta_path")
 @click.argument("output_path")
-def wrapper_for_tree_ordering(file_type, tree_path, fasta_path, output_path):
-    if file_type == "nwk":
-        with open(tree_path, "r") as the_file:
-            tree_data = the_file.read().splitlines()
-    elif file_type == "pkl":
-        # This is old functionality and probably shouldn't be called.
-        tree_data = tree_data_of_path(tree_path).tree_set
+@click.option("--sort", default=True)
+def wrapper_for_tree_ordering(tree_path, fasta_path, output_path, sort=True):
+    with open(tree_path, "r") as the_file:
+        tree_data = the_file.read().splitlines()
 
-    optimized_trees = optimize_branch_lengths_and_sort(tree_data, fasta_path)
+    optimized_trees = optimize_branch_lengths_and_sort(tree_data, fasta_path, sort)
 
     with open(output_path, "w") as the_output_file:
         for tree in optimized_trees:
