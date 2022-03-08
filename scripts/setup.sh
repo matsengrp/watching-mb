@@ -16,11 +16,12 @@ done
 
 for i in 1 3 4 5 6 7 8;
 do
-    for target in analysis golden;
+    for target in analysis golden nni-analysis;
     do
         mkdir -p $target/ds${i}
         data_path=$(realpath $target)/ds${i}/data
         test -e $data_path || ln -s $(realpath ds-data/ds${i}) $data_path
     done
     ln -s $(realpath_osx golden/ds${i}) $(realpath_osx analysis/ds${i}/golden)
+    ln -s $(realpath_osx golden/ds${i}) $(realpath_osx nni-analysis/ds${i}/golden)
 done
