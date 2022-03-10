@@ -10,11 +10,8 @@ set -eu
 
 for i in 1 3 4 5 6 7 8;
 do
-    # Create directory, if it doesn't already exist, and move there.
-    mkdir -p golden/ds${i}/posterior-support
-    cd golden/ds${i}/posterior-support
+    cd nni-analysis/ds${i}
 
-    # Create a shell file based on the template.
     template_name=process-golden-for-exploration.sh
     wtch-template.sh $template_name ../data/base.json $template_name
 

@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 import numpy as np
 import igraph
-import matplotlib.pyplot as plt
 import click
 import multiprocessing
 from sortedcontainers import SortedList
+from functools import partial
 
 
-
-# A notes on igraph and indexing:
+# A note on igraph and indexing:
 # The module igraph keeps track of the vertices using contiguous indexing. So 
 # when vertices are deleted or moved around, the indices may change. But vertices are 
 # allowed attibutes and attributes are exposed as dictionaries. For an attribute 
@@ -27,7 +26,7 @@ from sortedcontainers import SortedList
 
 def fast_line_count(file_path):
     """Returns the number of lines in file_path. This method is as fast as invoking 
-    wc -l (according to people on stack exchange).
+    wc -l.
     """
     def _make_generator(reader):
         while True:
@@ -54,8 +53,7 @@ def encode_sdag_nodes_as_int(sdag_node_list):
 
 
 def decode_int_as_sdag_nodes(the_int):
-    """This is the inverse function of encode_sdag_nodes_as_int, up to issues of list 
-    ordering.
+    """This is the inverse function of encode_sdag_nodes_as_int, up to list ordering.
     """
     bit_string = bin(the_int)[::-1]
     return [j for j in range(the_int.bit_length()) if bit_string[j]=="1"]
@@ -78,15 +76,12 @@ def load_trees(file_path):
     :rtype: tuple
     """
     n_rows = fast_line_count(file_path)
-    # The reason that tree_bit_list is not a numpy array of ints is that numpy uses
-    # C compatible types, so there will be issues with the maximum size, but python
-    # handles large integers on its own. E.g., python is fine with the int 2**700,
-    # but numpy is not.
+    # We use a python list of ints for tree_bit_list because Python does not have a 
+    # maximum int size, but a numpy array of ints does.
     tree_bit_list = []
     tree_log_likelihood_array = np.zeros(n_rows, dtype=float)
     with open(file_path, "rt") as the_file:
         for j, line in enumerate(the_file):
-            # last character is the newline, even the last line has a newline character.
             sdag_info = line[:-1].split(",")
             tree_bit_list.append( encode_sdag_nodes_as_int(map(int, sdag_info[:-1])) )
             tree_log_likelihood_array[j] = float(sdag_info[-1])
@@ -105,7 +100,7 @@ def are_nni_related(this_int, that_int):
 
 def find_nni_trees(j, tree_bits_list): 
     """Returns a list of pairs (j,k), where the integers tree_bits_list[j]
-    and tree_bits_list[k] represent trees that a single NNI operation away
+    and tree_bits_list[k] represent trees that are single NNI operation away
     from each other. This method is designed for multiprocessing on j.
     """
     return [
@@ -135,8 +130,7 @@ def max_weight_neighbor_traversal(graph, weight_attribute):
         current_vertex = unvisited_neighbors.pop(0)
         visited_vertices.append(current_vertex)
         unvisited_neighbors.update([
-                neighbor
-                for neighbor in current_vertex.neighbors()
+                neighbor for neighbor in current_vertex.neighbors()
                 if neighbor not in visited_vertices and neighbor not in unvisited_neighbors
             ]
         )
@@ -175,8 +169,10 @@ def find_likely_neighbors(sdag_rep_path, output_path, max_tree_count=0, max_tree
   
     #For the cluster, 16 processes works well.
     with multiprocessing.Pool(processes=16) as pool:
-        arg_wrapper = lambda j: (j,the_graph.vs["encoded_sdag_representation"])
-        edges = pool.starmap(find_nni_trees, map(arg_wrapper,range(vertex_count-1)))
+        #arg_wrapper = lambda j: (j,the_graph.vs["encoded_sdag_representation"])
+        partial_find_nni_trees = partial(find_nni_trees, tree_bits_list=tree_bits_list)  
+        edges = pool.map(partial_find_nni_trees, range(vertex_count-1))
+        #edges = pool.starmap(find_nni_trees, map(arg_wrapper,range(vertex_count-1)))
     for edge_list in edges:
         the_graph.add_edges(edge_list)
     #At this point, the graph is fully constructed.

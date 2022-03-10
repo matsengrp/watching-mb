@@ -33,3 +33,14 @@ Make sure you are first in the right conda environment.
 ### Run analysis
 
     scripts/all-analysis.sh
+
+### Set up scripts for nni-analysis
+
+    scripts/all-setup-nni-analysis.sh
+
+### Run an nni-analysis (currently only ds1 is known to work)
+
+    cd nni-analysis/ds1
+    process-golden-for-nni-exploration.sh
+    construct-nni-walk.sh
+    analyze-nni-walk.sh
