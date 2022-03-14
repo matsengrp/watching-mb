@@ -51,10 +51,10 @@ def mcmc_df_of_topology_sequence(topology_sequence_path, golden):
 
 
 def indexer_reps_of_path(path, sort=True):
-    # expected file format .................is gpcsp index representation and an extra comma, one comma separated list per line
     representations = []
     with open(path) as the_file:
         for line in the_file:
+            # After the last comma is either an empty entry or the log-likelihood.
             rep = [int(j) for j in line.split(",")[:-1]]
             if sort:
                 rep.sort()
@@ -196,11 +196,4 @@ def run(
 
 
 if __name__ == "__main__":
-    # expects to run from watching-mb/nni-analysis/ds{j}/
     run()
-    #    nni_rep_path="ds1.nni-walk.representations.csv",
-    #    cred_rep_path="ds1.credible.representations.csv",
-    #    pp_rep_path="ds1.pp.representations.csv",
-    #    pp_values_path="ds1.pp_values.csv",
-    # golden_pickle_path="golden/posterior.pkl",
-    # topology_sequence_path="analysis/mb/rerooted-topology-sequence.tab",
