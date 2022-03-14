@@ -21,6 +21,7 @@ do
     for template_name in $t_name1 $t_name2 $t_name3;
     do	    
         wtch-template.sh $template_name data/base.json $template_name
+        chmod +x $template_name	
     done
 
     cd ../../
