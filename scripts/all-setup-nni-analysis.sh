@@ -18,8 +18,10 @@ do
     t_name1=process-golden-for-nni-exploration.sh 
     t_name2=construct-nni-walk.sh 
     t_name3=analyze-nni-walk.sh
-    for template_name in $t_name1 $t_name2 $t_name3
+    for template_name in $t_name1 $t_name2 $t_name3;
+    do	    
         wtch-template.sh $template_name data/base.json $template_name
+    done
 
     cd ../../
 done
