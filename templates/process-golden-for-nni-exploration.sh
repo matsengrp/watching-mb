@@ -7,7 +7,7 @@ set -eu
 seqmagick convert data/DS{{ds_number}}.n.nex ds{{ds_number}}.fasta
 
 # Create the newick files and csv of the pp values from the posterior pickle.
-wtch-unpickle-cdf.py golden/posterior.pkl ds{{ds_number}}.credible.nwk ds{{ds_number}}.mb-trees.nwk ds{{ds_number}}.mb-pp.csv  
+wtch-unpickle-cdf.py golden/mb/posterior.pkl ds{{ds_number}}.credible.nwk ds{{ds_number}}.mb-trees.nwk ds{{ds_number}}.mb-pp.csv  
 
 # Generate all Nearest Neighbor Interchange trees of the credible set.
 wtch-generate-all-nnis.sh ds{{ds_number}}.credible.nwk {{reroot_number}} > ds{{ds_number}}.neighbors.nwk
@@ -21,6 +21,11 @@ wtch-branch-optimization.py ds{{ds_number}}.mb-trees.nwk ds{{ds_number}}.fasta d
 nw_reroot ds{{ds_number}}.ordered.nwk {{reroot_number}} > ds{{ds_number}}.rerooted.nwk
 nw_reroot ds{{ds_number}}.credible.with-branches.nwk {{reroot_number}} > ds{{ds_number}}.credible.rerooted.nwk
 nw_reroot ds{{ds_number}}.mb-trees.with-branches.nwk {{reroot_number}} > ds{{ds_number}}.mb-trees.rerooted.nwk
+
+# Prepare and do the short MCMC run, which we'll compare against.
+cd mcmc-explore 
+./prepare-comparison-mcmc.sh 
+cd ..
 
 # Run reps_and_likelihoods to get the representations.
 # Be warned, the following call may be too much to handle, even on the cluster.

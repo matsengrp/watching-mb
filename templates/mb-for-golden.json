@@ -1,10 +1,10 @@
 {
     "config_path": "mb-for-golden.json",
-    "nexus_alignment_path": "../data/DS{{ds_number}}.n.nex",
+    "nexus_alignment_path": "../../../data/DS{{ds_number}}.n.nex",
     "output_prefix": "ds{{ds_number}}",
     "brlenspr": "unconstrained:exp(10.0)",
     "nchains": 4,
-    "ngen": 10000000,
+    "ngen": 1000000000,
     "burnin_frac": 0.1,
     "samplefreq": 1000,
     "printfreq": 1000,

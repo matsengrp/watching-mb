@@ -125,6 +125,7 @@ def run(
 
     fig, ax = plt.subplots()
     x, y, iters = mcmc_df[["support_size", "credible_set_frac", "mcmc_iters"]].iloc[-1]
+    x *= 0.99
     y *= 0.9
 
     # Next we make a plot for each key with the specificed x_label, y_label, and save
@@ -142,7 +143,7 @@ def run(
         "mcmc_acc": None,
         "nni_acc": None,
         "mcmc_vs_nni_cred": "ratio of credible set",
-        "mcmc_vs_nni_pp": "total pp",
+        "mcmc_vs_nni_pp": "cumulative posterior probability",
     }
     x_attr = {
         "mcmc_acc": ("mcmc_iters", "mcmc_iters"),
@@ -182,15 +183,16 @@ def run(
     }
 
     for key in keys:
-        ax.set_xlabel(x_label[key])
+        ax.set_xlabel(x_label[key], fontsize="x-large")
         if not y_label[key] is None:
-            ax.set_ylabel(y_label[key])
+            ax.set_ylabel(y_label[key], fontsize="x-large")
         stuff_to_plot = zip(x_attr[key], y_attr[key], data_set[key], line_label[key])
         for the_x, the_y, the_data, the_line_label in stuff_to_plot:
             ax.plot(the_x, the_y, data=the_data, label=the_line_label)
         if mark_mcmc_iter[key]:
-            ax.text(x, y, f"{int(iters)}" + "\nmcmc\niterations", fontsize="small")
-        ax.legend()
+            ax.text(x, y, f"{int(iters)}" + "\nmcmc\niterations", fontsize="medium")
+            ax.set_xlim(right=1.1 * ax.get_xlim()[1])
+        ax.legend(fontsize="medium")
         ax.figure.savefig(out_path[key])
         ax.clear()
 

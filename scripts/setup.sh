@@ -16,7 +16,7 @@ done
 
 for i in 1 3 4 5 6 7 8;
 do
-    for target in analysis golden nni-analysis;
+    for target in analysis golden nni-analysis mcmc-explore;
     do
         mkdir -p $target/ds${i}
         data_path=$(realpath $target)/ds${i}/data
@@ -24,5 +24,6 @@ do
     done
     ln -sfn $(realpath_osx golden/ds${i}) $(realpath_osx analysis/ds${i}/golden)
     ln -sfn $(realpath_osx golden/ds${i}) $(realpath_osx nni-analysis/ds${i}/golden)
-    ln -sfn $(realpath_osx analysis/ds${i}) $(realpath_osx nni-analysis/ds${i}/analysis)
+    ln -sfn $(realpath_osx nni-analysis/ds${i}) $(realpath_osx mcmc-explore/ds${i}/nni-analysis)
+    ln -sfn $(realpath_osx mcmc-explore/ds${i}) $(realpath_osx nni-analysis/ds${i}/mcmc-explore) 
 done

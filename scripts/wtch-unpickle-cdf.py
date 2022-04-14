@@ -21,11 +21,14 @@ def cli(read_path, credible_tree_write_path, pp_tree_write_path, pp_value_write_
     with open(credible_tree_write_path, "wt") as out_file:
         for tree in cred_tree_list:
             out_file.write(tree + "\n")
+    # The use of 7 digits is specific to the current setup of the default 6 digits from
+    # MrBayes and the extra digit due to the 10 runs.  
+    formatter = lambda tree : "{:.7f}".format(pp_dict[tree])
     with open(pp_tree_write_path, "wt") as tree_out_file:
         with open(pp_value_write_path, "wt") as pp_out_file:
             for tree in pp_dict.keys():
                 tree_out_file.write(tree + "\n")
-                pp_out_file.write(str(pp_dict[tree]) + "\n")
+                pp_out_file.write(formatter(tree) + "\n")
 
 
 if __name__ == "__main__":

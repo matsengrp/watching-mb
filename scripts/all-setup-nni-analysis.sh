@@ -11,18 +11,24 @@
 
 set -eu
 
+
+t_name1=process-golden-for-nni-exploration.sh
+t_name2=construct-nni-walk.sh
+t_name3=analyze-nni-walk.sh
+t_name4=prepare-comparison-mcmc.sh 
+
 for i in 1 3 4 5 6 7 8;
 do
     cd nni-analysis/ds${i}
-
-    t_name1=process-golden-for-nni-exploration.sh 
-    t_name2=construct-nni-walk.sh 
-    t_name3=analyze-nni-walk.sh
     for template_name in $t_name1 $t_name2 $t_name3;
     do	    
         wtch-template.sh $template_name data/base.json $template_name
         chmod +x $template_name	
     done
 
-    cd ../../
+    cd mcmc-explore
+    wtch-template.sh $t_name4 data/base.json $t_name4
+    chmod +x $t_name4
+
+    cd ../../../
 done
