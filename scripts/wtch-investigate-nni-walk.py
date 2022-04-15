@@ -114,84 +114,106 @@ def run(
     golden = golden_data_of_path(golden_pickle_path)
     mcmc_df = mcmc_df_of_topology_sequence(topology_sequence_path, golden)
     mcmc_df.to_csv("mcmc.csv")
-    last_mcmc_pp = mcmc_df[mcmc_df["first_time"]]["total_pp"].idxmax()
-    mcmc_df = mcmc_df.iloc[: 1 + last_mcmc_pp]
+    last_mcmc_pp_idx = mcmc_df[mcmc_df["first_time"]]["total_pp"].idxmax()
+    last_mcmc_cred_idx = mcmc_df[mcmc_df["first_time"]]["credible_set_found"].idxmax()
+    mcmc_pp_df = mcmc_df.loc[: 1 + last_mcmc_pp_idx]
+    mcmc_cred_df = mcmc_df.loc[: 1 + last_mcmc_cred_idx]
 
     nni_df = nni_results_df_of(nni_rep_path, cred_rep_path, pp_rep_path, pp_values_path)
     nni_df.to_csv("nni.csv")
-    nni_df = nni_df[nni_df["bigger_sdag"]]
-    last_nni_pp = nni_df["total_pp"].idxmax()
-    nni_df = nni_df.iloc[: 1 + last_nni_pp]
+    last_nni_sdag_idx = nni_df["sdag_iter"].idxmax()
+    nni_sdag_df = nni_df.loc[: 1 + last_nni_sdag_idx]
+    last_nni_pp_idx = nni_sdag_df["total_pp"].idxmax()
+    nni_pp_df = nni_sdag_df.loc[: 1 + last_nni_pp_idx]
+    last_nni_cred_idx = nni_sdag_df["cred_total"].idxmax()
+    nni_cred_df = nni_sdag_df.loc[: 1 + last_nni_cred_idx]
+
+    mcmc_last_pp = mcmc_pp_df[["support_size", "total_pp", "mcmc_iters"]].iloc[-1]
+    mcmc_last_cred = mcmc_cred_df[
+        ["support_size", "credible_set_frac", "mcmc_iters"]
+    ].iloc[-1]
+    nni_last_pp = nni_pp_df[["sdag_iter", "total_pp", "support_size"]].iloc[-1]
+    nni_last_cred = nni_cred_df[["sdag_iter", "cred_frac", "support_size"]].iloc[-1]
 
     fig, ax = plt.subplots()
-    x, y, iters = mcmc_df[["support_size", "credible_set_frac", "mcmc_iters"]].iloc[-1]
-    x *= 0.99
-    y *= 0.9
 
     # Next we make a plot for each key with the specificed x_label, y_label, and save
     # to the specified out_path. Each plot consists of some number of lines, each line
     # using a dataset with an x_attribute, y_attribute, and line_label, and optionally
-    # write on the graph the number of mcmc iterations.
-    keys = ["mcmc_acc", "nni_acc", "mcmc_vs_nni_cred", "mcmc_vs_nni_pp"]
+    # the last value of a specified attribute of the dataset.
+    keys = ["mcmc_acc", "nni_acc", "nni_vs_mcmc_cred", "nni_vs_mcmc_pp"]
     x_label = {
         "mcmc_acc": "mcmc iterations",
         "nni_acc": "sdag iteration",
-        "mcmc_vs_nni_cred": "mcmc support -- sdag iteration",
-        "mcmc_vs_nni_pp": "mcmc support -- sdag iteration",
+        "nni_vs_mcmc_cred": "sdag iteration -- mcmc support",
+        "nni_vs_mcmc_pp": "sdag iteration -- mcmc support",
     }
     y_label = {
         "mcmc_acc": None,
         "nni_acc": None,
-        "mcmc_vs_nni_cred": "ratio of credible set",
-        "mcmc_vs_nni_pp": "cumulative posterior probability",
+        "nni_vs_mcmc_cred": "ratio of credible set",
+        "nni_vs_mcmc_pp": "cumulative posterior probability",
     }
     x_attr = {
         "mcmc_acc": ("mcmc_iters", "mcmc_iters"),
         "nni_acc": ("sdag_iter", "sdag_iter"),
-        "mcmc_vs_nni_cred": ("sdag_iter", "support_size"),
-        "mcmc_vs_nni_pp": ("sdag_iter", "support_size"),
+        "nni_vs_mcmc_cred": ("sdag_iter", "support_size"),
+        "nni_vs_mcmc_pp": ("sdag_iter", "support_size"),
     }
     y_attr = {
         "mcmc_acc": ("total_pp", "credible_set_frac"),
         "nni_acc": ("total_pp", "cred_frac"),
-        "mcmc_vs_nni_cred": ("cred_frac", "credible_set_frac"),
-        "mcmc_vs_nni_pp": ("total_pp", "total_pp"),
+        "nni_vs_mcmc_cred": ("cred_frac", "credible_set_frac"),
+        "nni_vs_mcmc_pp": ("total_pp", "total_pp"),
     }
     data_set = {
-        "mcmc_acc": (mcmc_df, mcmc_df),
-        "nni_acc": (nni_df, nni_df),
-        "mcmc_vs_nni_cred": (nni_df, mcmc_df),
-        "mcmc_vs_nni_pp": (nni_df, mcmc_df),
+        "mcmc_acc": (mcmc_pp_df, mcmc_pp_df),
+        "nni_acc": (nni_pp_df, nni_pp_df),
+        "nni_vs_mcmc_cred": (nni_cred_df, mcmc_cred_df),
+        "nni_vs_mcmc_pp": (nni_pp_df, mcmc_pp_df),
     }
     line_label = {
         "mcmc_acc": ("total pp", "fraction of credible set"),
         "nni_acc": ("total pp", "fraction of credible set"),
-        "mcmc_vs_nni_cred": ("nni-walk", "mcmc"),
-        "mcmc_vs_nni_pp": ("nni-walk", "mcmc"),
+        "nni_vs_mcmc_cred": ("nni-walk", "mcmc"),
+        "nni_vs_mcmc_pp": ("nni-walk", "mcmc"),
     }
-    mark_mcmc_iter = {
-        "mcmc_acc": False,
-        "nni_acc": False,
-        "mcmc_vs_nni_cred": True,
-        "mcmc_vs_nni_pp": True,
+    extra_plot = {
+        "mcmc_acc": (None, None),
+        "nni_acc": (None, None),
+        "nni_vs_mcmc_cred": (
+            ("support_size", "sampled topologies", 0.75, 1.01),
+            ("mcmc_iters", "\nmcmc\niterations", 1.01, 0.9),
+        ),
+        "nni_vs_mcmc_pp": (
+            ("support_size", "sampled topologies", 0.8, 1.01),
+            ("mcmc_iters", "mcmc iterations", 0.9, 0.95),
+        ),
     }
     out_path = {
         "mcmc_acc": "mcmc_accumulation.pdf",
         "nni_acc": "nni_accumulation.pdf",
-        "mcmc_vs_nni_cred": "sdag_iter_vs_mcmc_credible.pdf",
-        "mcmc_vs_nni_pp": "sdag_iter_vs_mcmc_total_pp.pdf",
+        "nni_vs_mcmc_cred": "sdag_iter_vs_mcmc_credible.pdf",
+        "nni_vs_mcmc_pp": "sdag_iter_vs_mcmc_total_pp.pdf",
     }
 
     for key in keys:
         ax.set_xlabel(x_label[key], fontsize="x-large")
         if not y_label[key] is None:
             ax.set_ylabel(y_label[key], fontsize="x-large")
-        stuff_to_plot = zip(x_attr[key], y_attr[key], data_set[key], line_label[key])
-        for the_x, the_y, the_data, the_line_label in stuff_to_plot:
+        stuff_to_plot = zip(
+            x_attr[key], y_attr[key], data_set[key], line_label[key], extra_plot[key]
+        )
+        for the_x, the_y, the_data, the_line_label, the_extra in stuff_to_plot:
             ax.plot(the_x, the_y, data=the_data, label=the_line_label)
-        if mark_mcmc_iter[key]:
-            ax.text(x, y, f"{int(iters)}" + "\nmcmc\niterations", fontsize="medium")
-            ax.set_xlim(right=1.1 * ax.get_xlim()[1])
+            if not the_extra is None:
+                x, y, z = the_data[[the_x, the_y, the_extra[0]]].iloc[-1]
+                plot_text = the_extra[1]
+                print(f"{z} {plot_text} at ({x}, {y})")
+                x *= the_extra[2]
+                y *= the_extra[3]
+                ax.text(x, y, f"{int(z)} {plot_text}", fontsize="x-small")
+                ax.set_xlim(right=1.1 * ax.get_xlim()[1])
         ax.legend(fontsize="medium")
         ax.figure.savefig(out_path[key])
         ax.clear()
