@@ -6,4 +6,6 @@ begin mrbayes;
     prset statefreqpr=fixed(equal) topologypr=uniform brlenspr={{brlenspr}};
     mcmcp nruns=1 nchains={{nchains}} ngen={{ngen}} samplefreq={{samplefreq}} printfreq={{printfreq}} diagnfreq={{printfreq}} file={{output_prefix}};
     mcmc;
+    sump burninfrac={{burnin_frac}};
+    sumt burninfrac={{burnin_frac}};
 end;

@@ -2,11 +2,11 @@
 
 set -eu -o pipefail
 
-mkdir iqtree && cd iqtree
+mkdir -p iqtree && cd iqtree
 wtch-run-iqtree.sh
 cd ..
 
-mkdir mb && cd mb
+mkdir -p mb && cd mb
 wtch-run-watching-mb.sh
 cd ..
 
