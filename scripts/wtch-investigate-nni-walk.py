@@ -123,6 +123,8 @@ def run(
     nni_df.to_csv("nni.csv")
     last_nni_sdag_idx = nni_df["sdag_iter"].idxmax()
     nni_sdag_df = nni_df.loc[: 1 + last_nni_sdag_idx]
+    nni_sdag_df = nni_sdag_df[nni_sdag_df["bigger_sdag"]]
+
     last_nni_pp_idx = nni_sdag_df["total_pp"].idxmax()
     nni_pp_df = nni_sdag_df.loc[: 1 + last_nni_pp_idx]
     last_nni_cred_idx = nni_sdag_df["cred_total"].idxmax()
