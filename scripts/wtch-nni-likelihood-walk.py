@@ -135,8 +135,14 @@ def max_weight_neighbor_traversal(graph, weight_attribute, start_trees=[]):
     visited_vertices = [] if current_vertex in start_trees else [current_vertex]
     visited_vertices.extend(start_trees)
     unvisited_neighbors = SortedList(key=lambda v: -v[weight_attribute])
-    for c in visited_vertices:
-        unvisited_neighbors.update(c.neighbors())
+    unvisited_neighbors.update(
+        {
+            n
+            for c in visited_vertices
+            for n in c.neighbors()
+            if n not in visited_vertices
+        }
+    )
 
     while len(unvisited_neighbors) > 0:
         current_vertex = unvisited_neighbors.pop(0)
@@ -194,7 +200,6 @@ def find_likely_neighbors(
 
     # For the cluster, 16 processes works well.
     with multiprocessing.Pool(processes=16) as pool:
-
         partial_find_nni_trees = partial(
             find_nni_trees, tree_bits_list=the_graph.vs["encoded_sdag_representation"]
         )
@@ -205,7 +210,6 @@ def find_likely_neighbors(
 
     extras = [] if extra_trees_path is None else load_trees(extra_trees_path, False)[0]
     extra_nodes = the_graph.vs.select(encoded_sdag_representation_in=extras)
-
     good_vertex_indices = max_weight_neighbor_traversal(
         the_graph, "log_likelihood", extra_nodes
     )
