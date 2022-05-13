@@ -59,20 +59,21 @@ def decode_int_as_sdag_nodes(the_int):
     return [j for j in range(the_int.bit_length()) if bit_string[j] == "1"]
 
 
-def load_trees(file_path):
-    """
-    Loads in the tree data from file_path. The expected file format of file_path
+def load_trees(file_path, with_likelihoods=False):
+    """Loads in the tree data from file_path. The expected file format of file_path
     is one tree per line, each line consists of i) a comma separated list of integers
-    of the subsplit dag node indices comprising the tree, ii) another comma followed by
-    the log-likelihood of the tree, and iii) the newline character \\n (even the final
+    of the subsplit dag node indices comprising the tree; ii) another comma followed by
+    nothing when with_likelihoods is False and the log-likelihood of the tree
+    when with_likelilihooods is True; and iii) the newline character \\n (even the final
     line should have the newline character). The subsplit dag is not seen by any of
     this code, so it is only assumed that the trees are all from a common sdag and the
     node indices are correct.
 
     :return: A pair (T,L), where T is a python list of integers encoding each tree's
         subsplit dag node representation and L is a numpy.array of each tree's
-        log-likelihood. Both T and L are sorted in descending order according to
-        log-likelihood.
+        log-likelihood. When with_likelihoods is True, both T and L are sorted in
+        descending order according to log-likelihood. When with_likelihoods is False,
+        L is a vector of zeros.
     :rtype: tuple
     """
     n_rows = fast_line_count(file_path)
@@ -80,14 +81,24 @@ def load_trees(file_path):
     # maximum int size, but a numpy array of ints does.
     tree_bit_list = []
     tree_log_likelihood_array = np.zeros(n_rows, dtype=float)
-    with open(file_path, "rt") as the_file:
-        for j, line in enumerate(the_file):
-            sdag_info = line[:-1].split(",")
-            tree_bit_list.append(encode_sdag_nodes_as_int(map(int, sdag_info[:-1])))
-            tree_log_likelihood_array[j] = float(sdag_info[-1])
-    new_indices = tree_log_likelihood_array.argsort()[::-1]
-    tree_bit_list = [tree_bit_list[j] for j in new_indices]
-    tree_log_likelihood_array = tree_log_likelihood_array[new_indices]
+    if not with_likelihoods:
+        # In bito, reps_and_likelihoods uses SIZE_MAX for unknown subsplits.
+        invalid_index = 2**64 - 1
+        with open(file_path, "rt") as the_file:
+            for line in the_file:
+                sdag_info = line[:-2].split(",")
+                sdag_info = [int(c) for c in sdag_info]
+                if invalid_index not in sdag_info:
+                    tree_bit_list.append(encode_sdag_nodes_as_int(sdag_info))
+    else:
+        with open(file_path, "rt") as the_file:
+            for j, line in enumerate(the_file):
+                sdag_info = line[:-1].split(",")
+                tree_bit_list.append(encode_sdag_nodes_as_int(map(int, sdag_info[:-1])))
+                tree_log_likelihood_array[j] = float(sdag_info[-1])
+        new_indices = tree_log_likelihood_array.argsort()[::-1]
+        tree_bit_list = [tree_bit_list[j] for j in new_indices]
+        tree_log_likelihood_array = tree_log_likelihood_array[new_indices]
     return (tree_bit_list, tree_log_likelihood_array)
 
 
@@ -110,23 +121,29 @@ def find_nni_trees(j, tree_bits_list):
     ]
 
 
-def max_weight_neighbor_traversal(graph, weight_attribute):
+def max_weight_neighbor_traversal(graph, weight_attribute, start_trees=[]):
     """Calculate a list of vertex indices from graph with large weight_attribute
     values. More precisely, the list begins with a vertex of maximal weight_attribute
-    value and each later element of the list has maximal weight_attribute value among
-    the neighors of all earlier elements.
-
-    While this list consists of exactly the connected component of the initial vertex,
-    the ordering is not necessarilly decreasing in the weight_attribute value.
+    value, along with the vertices in start_trees, and each later element of the list
+    has maximal weight_attribute value among the neighors of all earlier elements.
 
     :type graph: igraph.Graph
     """
     if graph.vcount() == 0:
         return []
     current_vertex = graph.vs[np.argmax(graph.vs[weight_attribute])]
-    visited_vertices = [current_vertex]
+    visited_vertices = [] if current_vertex in start_trees else [current_vertex]
+    visited_vertices.extend(start_trees)
     unvisited_neighbors = SortedList(key=lambda v: -v[weight_attribute])
-    unvisited_neighbors.update(current_vertex.neighbors())
+    unvisited_neighbors.update(
+        {
+            n
+            for c in visited_vertices
+            for n in c.neighbors()
+            if n not in visited_vertices
+        }
+    )
+
     while len(unvisited_neighbors) > 0:
         current_vertex = unvisited_neighbors.pop(0)
         visited_vertices.append(current_vertex)
@@ -146,21 +163,29 @@ def max_weight_neighbor_traversal(graph, weight_attribute):
 @click.command()
 @click.argument("sdag_rep_path")
 @click.argument("output_path")
+@click.option("--extra_trees_path", default=None)
 @click.option("--max_tree_count", default=0)
 @click.option("--max_tree_ratio", default=0.0)
 def find_likely_neighbors(
-    sdag_rep_path, output_path, max_tree_count=0, max_tree_ratio=0.0
+    sdag_rep_path,
+    output_path,
+    extra_trees_path=None,
+    max_tree_count=0,
+    max_tree_ratio=0.0,
 ):
     """
     Determine a list of of trees that are nearest neighbor interchanges of each other
     with high likelihood. The data for the trees are in sdag_rep_path and this file
-    should follow the format explained in the documentation for load_trees(file_path).
+    must follow the format explained in the documentation for
+    load_trees(file_path, True). The optional parameter extra_trees_path specifies a
+    file of trees, following the format specified for load_trees(file_path, False),
+    with which to start the walk along with the highest likelihood tree.
     The optional parameters max_tree_count and max_tree_ratio indicate to use only the
     the first max_tree_count (max_tree_ratio, respectively) after sorting the trees
     by log-likelihood. When max_tree_count and max_tree_ratio are both given, the more
     restrictive condition is used.
     """
-    tree_bits_list, log_likelihoods = load_trees(sdag_rep_path)
+    tree_bits_list, log_likelihoods = load_trees(sdag_rep_path, True)
     vertex_count = len(tree_bits_list)
 
     if max_tree_ratio > 0:
@@ -183,7 +208,11 @@ def find_likely_neighbors(
         the_graph.add_edges(edge_list)
     # At this point, the graph is fully constructed.
 
-    good_vertex_indices = max_weight_neighbor_traversal(the_graph, "log_likelihood")
+    extras = [] if extra_trees_path is None else load_trees(extra_trees_path, False)[0]
+    extra_nodes = the_graph.vs.select(encoded_sdag_representation_in=extras)
+    good_vertex_indices = max_weight_neighbor_traversal(
+        the_graph, "log_likelihood", extra_nodes
+    )
 
     with open(output_path, "wt") as out_file:
         for vertex in the_graph.vs[good_vertex_indices]:

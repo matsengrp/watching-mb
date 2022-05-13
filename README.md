@@ -34,13 +34,15 @@ Make sure you are first in the right conda environment.
 
     scripts/all-analysis.sh
 
-### Set up scripts for nni-analysis
+### Set up scripts for nni-analysis (requires reps\_and\_likelihoods from bito)
 
     scripts/all-setup-nni-analysis.sh
 
 ### Run an nni-analysis (currently only ds1 is known to work)
+To run the analysis with multiple initial trees, write the trees to nni-analysis/ds1/ds1.extra-trees.nwk.
 
     cd nni-analysis/ds1
     ./process-golden-for-nni-exploration.sh
     ./construct-nni-walk.sh
     ./analyze-nni-walk.sh
+

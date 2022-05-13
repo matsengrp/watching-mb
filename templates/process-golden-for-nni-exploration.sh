@@ -40,7 +40,22 @@ head -n 1 $rerooted1 > rerooted2
 head -n 1 $rerooted1 > rerooted3
 cat $rerooted2 >> rerooted2
 cat $rerooted3 >> rerooted3
-reps_and_likelihoods ds{{ds_number}}.fasta $rerooted1 $out1 rerooted2 out2 rerooted3 out3
+# There may be an extra set of trees in the file ds{{ds_number}}.extra-trees.nwk, if so, we give it the same treatment as the other files. 
+if [[ -f ds{{ds_number}}.extra-trees.nwk && -s ds{{ds_number}}.extra-trees.nwk ]]
+then
+  wtch-branch-optimization.py ds{{ds_number}}.extra-trees.nwk ds{{ds_number}}.fasta ds{{ds_number}}.extra-trees.with-branches.nwk --sort=False
+  nw_reroot ds{{ds_number}}.extra-trees.with-branches.nwk {{reroot_number}} > ds{{ds_number}}.extra-trees.rerooted.nwk
+  rerooted4=ds{{ds_number}}.extra-trees.rerooted.nwk
+  out4=ds{{ds_number}}.extra-trees.representations.csv
+  head -n 1 $rerooted1 > rerooted4
+  cat $rerooted4 >> rerooted4
+  reps_and_likelihoods ds{{ds_number}}.fasta $rerooted1 $out1 rerooted2 out2 rerooted3 out3 rerooted4 out4
+  tail -n +2 out4 > $out4
+  rm rerooted4
+  rm out4
+else
+  reps_and_likelihoods ds{{ds_number}}.fasta $rerooted1 $out1 rerooted2 out2 rerooted3 out3
+fi
 tail -n +2 out2 > $out2
 tail -n +2 out3 > $out3
 
