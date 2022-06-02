@@ -7,3 +7,4 @@
 [submodule "gctree"]
 	path = gctree
 	url = git@github.com:matsengrp/gctree.git
+	branch = wd-disambiguation-script
