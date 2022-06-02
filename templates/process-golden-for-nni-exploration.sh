@@ -33,6 +33,7 @@ rerooted1=ds{{ds_number}}.rerooted.nwk
 rerooted2=ds{{ds_number}}.credible.rerooted.nwk 
 rerooted3=ds{{ds_number}}.mb-trees.rerooted.nwk
 out1=ds{{ds_number}}.representations.csv 
+out1_extra=ds{{ds_number}}.topologies.nwk
 out2=ds{{ds_number}}.credible.representations.csv 
 out3=ds{{ds_number}}.mb-trees.representations.csv
 # To make sure taxon ordering is the same, all files have the same first tree.
@@ -49,12 +50,12 @@ then
   out4=ds{{ds_number}}.extra-trees.representations.csv
   head -n 1 $rerooted1 > rerooted4
   cat $rerooted4 >> rerooted4
-  reps_and_likelihoods ds{{ds_number}}.fasta $rerooted1 $out1 rerooted2 out2 rerooted3 out3 rerooted4 out4
+  reps_and_likelihoods ds{{ds_number}}.fasta $rerooted1 $out1 $out1_extra rerooted2 out2 rerooted3 out3 rerooted4 out4
   tail -n +2 out4 > $out4
   rm rerooted4
   rm out4
 else
-  reps_and_likelihoods ds{{ds_number}}.fasta $rerooted1 $out1 rerooted2 out2 rerooted3 out3
+  reps_and_likelihoods ds{{ds_number}}.fasta $rerooted1 $out1 $out1_extra rerooted2 out2 rerooted3 out3
 fi
 tail -n +2 out2 > $out2
 tail -n +2 out3 > $out3
