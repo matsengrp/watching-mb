@@ -91,6 +91,9 @@ def nni_results_df_of(nni_rep_path, credible_rep_path, pp_rep_path, pp_values_pa
     nni_results_df["cred_total"] = nni_results_df["is_cred"].cumsum()
     nni_results_df["cred_frac"] = nni_results_df["cred_total"] / len(cred_set_reps)
     nni_results_df["bigger_sdag"] = sdag_increased
+    nni_results_df["comps_current"] = nni_results_df["bigger_sdag"] * 12
+    nni_results_df["comps_current"].iloc[0] = 48
+    nni_results_df["comps_total"] = nni_results_df["comps_current"].cumsum()
     nni_results_df["sdag_iter"] = nni_results_df["bigger_sdag"].cumsum()
 
     return nni_results_df
@@ -143,42 +146,48 @@ def run(
     # to the specified out_path. Each plot consists of some number of lines, each line
     # using a dataset with an x_attribute, y_attribute, and line_label, and optionally
     # the last value of a specified attribute of the dataset.
-    keys = ["mcmc_acc", "nni_acc", "nni_vs_mcmc_cred", "nni_vs_mcmc_pp"]
+    keys = ["mcmc_acc", "nni_acc", "nni_vs_mcmc_cred", "nni_vs_mcmc_pp", "comp_cred"]
     x_label = {
         "mcmc_acc": "mcmc iterations",
         "nni_acc": "sdag iteration",
         "nni_vs_mcmc_cred": "sdag iteration -- mcmc support",
         "nni_vs_mcmc_pp": "sdag iteration -- mcmc support",
+        "comp_cred": "approximate likelihood calculations",
     }
     y_label = {
         "mcmc_acc": None,
         "nni_acc": None,
         "nni_vs_mcmc_cred": "ratio of credible set",
         "nni_vs_mcmc_pp": "cumulative posterior probability",
+        "comp_cred": "ratio of credible set",
     }
     x_attr = {
         "mcmc_acc": ("mcmc_iters", "mcmc_iters"),
         "nni_acc": ("sdag_iter", "sdag_iter"),
         "nni_vs_mcmc_cred": ("sdag_iter", "support_size"),
         "nni_vs_mcmc_pp": ("sdag_iter", "support_size"),
+        "comp_cred": ("comps_total", "mcmc_iters"),
     }
     y_attr = {
         "mcmc_acc": ("total_pp", "credible_set_frac"),
         "nni_acc": ("total_pp", "cred_frac"),
         "nni_vs_mcmc_cred": ("cred_frac", "credible_set_frac"),
         "nni_vs_mcmc_pp": ("total_pp", "total_pp"),
+        "comp_cred": ("cred_frac", "credible_set_frac"),
     }
     data_set = {
         "mcmc_acc": (mcmc_pp_df, mcmc_pp_df),
         "nni_acc": (nni_pp_df, nni_pp_df),
         "nni_vs_mcmc_cred": (nni_cred_df, mcmc_cred_df),
         "nni_vs_mcmc_pp": (nni_pp_df, mcmc_pp_df),
+        "comp_cred": (nni_cred_df, mcmc_cred_df),
     }
     line_label = {
         "mcmc_acc": ("total pp", "fraction of credible set"),
         "nni_acc": ("total pp", "fraction of credible set"),
         "nni_vs_mcmc_cred": ("nni-walk", "mcmc"),
         "nni_vs_mcmc_pp": ("nni-walk", "mcmc"),
+        "comp_cred": ("nni-walk", "mcmc"),
     }
     extra_plot = {
         "mcmc_acc": (None, None),
@@ -191,12 +200,14 @@ def run(
             ("support_size", "sampled topologies", 0.8, 1.01),
             ("mcmc_iters", "mcmc iterations", 0.9, 0.95),
         ),
+        "comp_cred": (None, None),
     }
     out_path = {
         "mcmc_acc": "mcmc_accumulation.pdf",
         "nni_acc": "nni_accumulation.pdf",
         "nni_vs_mcmc_cred": "sdag_iter_vs_mcmc_credible.pdf",
         "nni_vs_mcmc_pp": "sdag_iter_vs_mcmc_total_pp.pdf",
+        "comp_cred": "computations_for_credible.pdf",
     }
 
     for key in keys:
