@@ -90,7 +90,7 @@ def parsimony_scores(nwk_list, fasta_map):
 
 def compute_parsimony_scores_from_files(nwk_path, fasta_path):
     """
-    Returns the parsomony scores for the newick strings in the file nwk_path using the
+    Returns the parsimony scores for the newick strings in the file nwk_path using the
     fasta file located at fasta_path.
     """
     nwk_list = read_nwk(nwk_path)
