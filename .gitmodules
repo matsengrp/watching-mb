@@ -4,3 +4,7 @@
 [submodule "spr_neighbors"]
 	path = spr_neighbors
 	url = https://github.com/cwhidden/spr_neighbors.git
+[submodule "gctree"]
+	path = gctree
+	url = git@github.com:matsengrp/gctree.git
+	branch = wd-disambiguation-script

@@ -45,4 +45,4 @@ To run the analysis with multiple initial trees, write the trees to nni-analysis
     ./process-golden-for-nni-exploration.sh
     ./construct-nni-walk.sh
     ./analyze-nni-walk.sh
-
+To use parsimony scores instead of likelihood, call `./construct-nni-walk.sh --use_parsimony` in the above code. 

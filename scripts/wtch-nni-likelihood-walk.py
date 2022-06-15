@@ -5,6 +5,14 @@ import click
 import multiprocessing
 from sortedcontainers import SortedList
 from functools import partial
+import os
+import sys
+
+# This funny business with paths is needed because this file is intended to be called
+# from the command line by a sym link in $CONDA_PREFIX/bin, but naively python does not
+# know to check that directory for parsimony.py.
+sys.path.append(os.path.dirname(__file__))
+from parsimony import load_fasta, build_tree, sankoff_upward
 
 
 # A note on igraph and indexing:
@@ -28,7 +36,7 @@ def fast_line_count(file_path):
     wc -l.
     """
 
-    def _make_generator(reader):
+    def _make_gen(reader):
         while True:
             b = reader(2**16)
             if not b:
@@ -36,9 +44,7 @@ def fast_line_count(file_path):
             yield b
 
     with open(file_path, "rb") as the_file:
-        count = sum(
-            buffer.count(b"\n") for buffer in _make_generator(the_file.raw.read)
-        )
+        count = sum(buffer.count(b"\n") for buffer in _make_gen(the_file.raw.read))
     return count
 
 
@@ -59,47 +65,120 @@ def decode_int_as_sdag_nodes(the_int):
     return [j for j in range(the_int.bit_length()) if bit_string[j] == "1"]
 
 
-def load_trees(file_path, with_likelihoods=False):
-    """Loads in the tree data from file_path. The expected file format of file_path
-    is one tree per line, each line consists of i) a comma separated list of integers
-    of the subsplit dag node indices comprising the tree; ii) another comma followed by
-    nothing when with_likelihoods is False and the log-likelihood of the tree
-    when with_likelilihooods is True; and iii) the newline character \\n (even the final
-    line should have the newline character). The subsplit dag is not seen by any of
-    this code, so it is only assumed that the trees are all from a common sdag and the
-    node indices are correct.
+def build_and_score(nwk, fasta_map):
+    """Returns the parsimony score for the given newick string and custom fasta_map."""
+    return sankoff_upward(build_tree(nwk, fasta_map), gap_as_char=False)
+
+
+def parsimony_scores(nwk_list, fasta_map):
+    """
+    Returns the parsimony scores for the given list of newick strings and custom
+    fasta_map.
+    """
+    informative_sites = [
+        idx for idx, chars in enumerate(zip(*fasta_map.values())) if len(set(chars)) > 1
+    ]
+    newfasta = {
+        key: "".join(oldseq[idx] for idx in informative_sites)
+        for key, oldseq in fasta_map.items()
+    }
+    with multiprocessing.Pool(processes=16) as pool:
+        partial_build_and_score = partial(build_and_score, fasta_map=newfasta)
+        scores = pool.map(partial_build_and_score, nwk_list)
+    return scores
+
+
+def compute_parsimony_scores_from_files(nwk_path, fasta_path):
+    """
+    Returns the parsimony scores for the newick strings in the file nwk_path using the
+    fasta file located at fasta_path.
+    """
+    nwk_list = read_nwk(nwk_path)
+    fasta_map = load_fasta(fasta_path)
+    return parsimony_scores(nwk_list, fasta_map)
+
+
+def read_nwk(nwk_path):
+    """Returns the list of newick strings in the file nwk_path."""
+    tree_nwk_list = []
+    with open(nwk_path) as the_file:
+        for line in the_file:
+            tree_nwk_list.append(line.strip())
+    return tree_nwk_list
+
+
+def read_sdag_rep_trees(file_path, with_likelihoods=False):
+    """
+    Loads the tree data from file_path. The expected file format of file_path is one
+    tree per line, each line consists of i) a comma separated list of integers of the
+    subsplit dag node indices comprising the tree; ii) another comma; iii) nothing when
+    with_likelihoods=False and the log-likelihood of the tree when
+    with_likelilihooods=True; and iv) the newline character \\n (even the final line
+    should have the newline character).
+
+    Since the subsplit DAG is not seen by any of this code, it is assumed that the trees
+    are all from a common sDAG and the node indices are correct. Trees that are not in
+    this commond sDAG are identified by an invalid sDAG node index and are omitted from
+    the returned values.
 
     :return: A pair (T,L), where T is a python list of integers encoding each tree's
-        subsplit dag node representation and L is a numpy.array of each tree's
-        log-likelihood. When with_likelihoods is True, both T and L are sorted in
-        descending order according to log-likelihood. When with_likelihoods is False,
-        L is a vector of zeros.
+        subsplit DAG node representation (a single integer is used for a single tree),
+        and L is a numpy.array of each tree's log-likelihood. When
+        with_likelihoods=False, L is a vector of zeros. When with_likelihoods=True, both
+        T and L are sorted in descending order according to log-likelihood.
     :rtype: tuple
     """
     n_rows = fast_line_count(file_path)
-    # We use a python list of ints for tree_bit_list because Python does not have a
-    # maximum int size, but a numpy array of ints does.
+    # In bito, reps_and_likelihoods uses SIZE_MAX for unknown subsplits.
+    invalid_index = 2**64 - 1
     tree_bit_list = []
-    tree_log_likelihood_array = np.zeros(n_rows, dtype=float)
-    if not with_likelihoods:
-        # In bito, reps_and_likelihoods uses SIZE_MAX for unknown subsplits.
-        invalid_index = 2**64 - 1
-        with open(file_path, "rt") as the_file:
-            for line in the_file:
-                sdag_info = line[:-2].split(",")
-                sdag_info = [int(c) for c in sdag_info]
-                if invalid_index not in sdag_info:
-                    tree_bit_list.append(encode_sdag_nodes_as_int(sdag_info))
-    else:
-        with open(file_path, "rt") as the_file:
-            for j, line in enumerate(the_file):
-                sdag_info = line[:-1].split(",")
-                tree_bit_list.append(encode_sdag_nodes_as_int(map(int, sdag_info[:-1])))
-                tree_log_likelihood_array[j] = float(sdag_info[-1])
-        new_indices = tree_log_likelihood_array.argsort()[::-1]
+    tree_likelihood_array = np.zeros(n_rows, dtype=float)
+    with open(file_path, "rt") as the_file:
+        for j, line in enumerate(the_file):
+            tree_info = line.strip().split(",")
+            sdag_rep = [int(c) for c in tree_info[:-1]]
+            if invalid_index not in sdag_rep:
+                tree_bit_list.append(encode_sdag_nodes_as_int(sdag_rep))
+                if with_likelihoods:
+                    tree_likelihood_array[j] = float(tree_info[-1])
+    return tree_bit_list, tree_likelihood_array
+
+
+def process_trees(
+    file_path,
+    with_likelihoods=False,
+    use_parsimony=False,
+    nwk_path=None,
+    fasta_path=None,
+):
+    """
+    Loads the tree data from file_path (according to the method read_sdag_rep_trees).
+    If either with_likelihoods or use_parsimony is true, then both an integer list
+    encoding the trees and a numpy array of the statistic are returned and both are
+    sorted according to the statistic. When both with_likelihoods and use_parsimony are
+    false, only the list of integers encoding the trees is returned. Both nwk_path and
+    fasta_path are required when use_parsimony=True.
+
+    When using parsimony scores, the negative of the parsimony score is returned. This
+    is done so that the ordering is always descending (high likelihood is good, whereas
+    low parsimony is good).
+    """
+    if with_likelihoods and use_parsimony:
+        raise ValueError("process_trees cannot use both likelihood and parsimony")
+    if use_parsimony and (nwk_path is None or fasta_path is None):
+        raise ValueError("process_trees requires nwk_path and fasta_path for parsimony")
+
+    tree_bit_list, tree_scores = read_sdag_rep_trees(file_path, with_likelihoods)
+    if use_parsimony:
+        tree_scores = compute_parsimony_scores_from_files(nwk_path, fasta_path)
+        tree_scores = np.array([-p for p in tree_scores])
+    if with_likelihoods or use_parsimony:
+        new_indices = tree_scores.argsort()[::-1]
         tree_bit_list = [tree_bit_list[j] for j in new_indices]
-        tree_log_likelihood_array = tree_log_likelihood_array[new_indices]
-    return (tree_bit_list, tree_log_likelihood_array)
+        tree_scores = tree_scores[new_indices]
+        return tree_bit_list, tree_scores
+    else:
+        return tree_bit_list
 
 
 def are_nni_related(this_int, that_int):
@@ -166,37 +245,50 @@ def max_weight_neighbor_traversal(graph, weight_attribute, start_trees=[]):
 @click.option("--extra_trees_path", default=None)
 @click.option("--max_tree_count", default=0)
 @click.option("--max_tree_ratio", default=0.0)
+@click.option("--use_parsimony", default=False, is_flag=True)
+@click.option("--nwk_path", default=None)
+@click.option("--fasta_path", default=None)
 def find_likely_neighbors(
     sdag_rep_path,
     output_path,
     extra_trees_path=None,
     max_tree_count=0,
     max_tree_ratio=0.0,
+    use_parsimony=False,
+    nwk_path=None,
+    fasta_path=None,
 ):
     """
-    Determine a list of of trees that are nearest neighbor interchanges of each other
-    with high likelihood. The data for the trees are in sdag_rep_path and this file
-    must follow the format explained in the documentation for
-    load_trees(file_path, True). The optional parameter extra_trees_path specifies a
-    file of trees, following the format specified for load_trees(file_path, False),
-    with which to start the walk along with the highest likelihood tree.
-    The optional parameters max_tree_count and max_tree_ratio indicate to use only the
-    the first max_tree_count (max_tree_ratio, respectively) after sorting the trees
-    by log-likelihood. When max_tree_count and max_tree_ratio are both given, the more
-    restrictive condition is used.
+    Determine a list of trees that are nearest neighbor interchanges of each other with
+    high likelihood (or low parsimony score when use_parsimony=True). The trees and
+    scores are loaded according to the method process_trees. The optional parameter
+    extra_trees_path specifies a file of trees with which to start the list along with
+    the best scored tree. The optional parameters max_tree_count and max_tree_ratio
+    indicate to use only the first max_tree_count (max_tree_ratio, respectively) after
+    sorting the trees. When max_tree_count and max_tree_ratio are both given, the more
+    restrictive condition is used. The list of trees is determined by the method
+    max_weight_neighbor_traversal.
     """
-    tree_bits_list, log_likelihoods = load_trees(sdag_rep_path, True)
-    vertex_count = len(tree_bits_list)
+    weight_attr = "parsimony" if use_parsimony else "log_likelihood"
 
+    tree_bits_list, tree_scores = process_trees(
+        sdag_rep_path,
+        with_likelihoods=not use_parsimony,
+        use_parsimony=use_parsimony,
+        nwk_path=nwk_path,
+        fasta_path=fasta_path,
+    )
+
+    vertex_count = len(tree_bits_list)
     if max_tree_ratio > 0:
         vertex_count = min(vertex_count, int(np.floor(max_tree_ratio * vertex_count)))
     if max_tree_count > 0:
         vertex_count = min(vertex_count, max_tree_count)
     the_graph = igraph.Graph(vertex_count)
     the_graph.vs["encoded_sdag_representation"] = tree_bits_list[:vertex_count]
-    the_graph.vs["log_likelihood"] = log_likelihoods[:vertex_count]
+    the_graph.vs[weight_attr] = tree_scores[:vertex_count]
     tree_bits_list = None
-    log_likelihoods = None
+    tree_scores = None
 
     # For the cluster, 16 processes works well.
     with multiprocessing.Pool(processes=16) as pool:
@@ -208,17 +300,18 @@ def find_likely_neighbors(
         the_graph.add_edges(edge_list)
     # At this point, the graph is fully constructed.
 
-    extras = [] if extra_trees_path is None else load_trees(extra_trees_path, False)[0]
+    extras = [] if extra_trees_path is None else process_trees(extra_trees_path)
     extra_nodes = the_graph.vs.select(encoded_sdag_representation_in=extras)
+
     good_vertex_indices = max_weight_neighbor_traversal(
-        the_graph, "log_likelihood", extra_nodes
+        the_graph, weight_attr, extra_nodes
     )
 
     with open(output_path, "wt") as out_file:
         for vertex in the_graph.vs[good_vertex_indices]:
             sdag_rep = decode_int_as_sdag_nodes(vertex["encoded_sdag_representation"])
             out_file.write(
-                ",".join(map(str, sdag_rep)) + f",{vertex['log_likelihood']}" + "\n"
+                ",".join(map(str, sdag_rep)) + f",{vertex[weight_attr]}" + "\n"
             )
 
     return None

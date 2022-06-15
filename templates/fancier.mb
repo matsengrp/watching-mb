@@ -1,0 +1,11 @@
+execute {{nexus_alignment_path}};
+
+begin mrbayes;
+    set autoclose=yes nowarn=yes seed={{seed}} swapseed={{swapseed}};
+    lset nst=6 rates=gamma;
+    prset statefreqpr=fixed(equal) topologypr=uniform brlenspr={{brlenspr}};
+    mcmcp nruns=1 nchains={{nchains}} ngen={{ngen}} samplefreq={{samplefreq}} printfreq={{printfreq}} diagnfreq={{printfreq}} file={{output_prefix}};
+    mcmc;
+    sump burninfrac={{burnin_frac}};
+    sumt burninfrac={{burnin_frac}};
+end;
